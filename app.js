@@ -76,6 +76,52 @@ app.post("/tasks", (req, res) => {
 
 });
 
+app.put("/tasks/:id", (req, res) => {
+
+    const taskId = parseInt(req.params.id);
+
+    const task = tasks.find(t => t.id === taskId);
+
+    if (!task) {
+        return res.status(404).json({
+            error: `Task ${taskId} not found`
+        });
+    }
+
+    if (!req.body.title || req.body.title.trim() === "") {
+    return res.status(400).json({
+        error: "Title is required"
+    });
+}
+
+   task.title = req.body.title;
+task.done = req.body.done;
+
+res.json(task);
+
+});
+
+app.delete("/tasks/:id", (req, res) => {
+
+    const taskId = parseInt(req.params.id);
+
+    const taskIndex = tasks.findIndex(t => t.id === taskId);
+
+    if (taskIndex === -1) {
+        return res.status(404).json({
+            error: `Task ${taskId} not found`
+        });
+    }
+
+    const deletedTask = tasks.splice(taskIndex, 1);
+
+    res.json({
+        message: "Task deleted successfully",
+        task: deletedTask[0]
+    });
+
+});
+
 app.listen(3000, () => {
     console.log("Server is running on http://localhost:3000");
 });
