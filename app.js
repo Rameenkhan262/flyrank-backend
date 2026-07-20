@@ -2,6 +2,8 @@ const express = require("express");
 
 const app = express();
 
+app.use(express.json());
+
 const tasks = [
     {
         id: 1,
@@ -51,6 +53,26 @@ app.get("/tasks/:id", (req, res) => {
     }
 
     res.json(task);
+
+});
+
+app.post("/tasks", (req, res) => {
+
+    if (!req.body.title || req.body.title.trim() === "") {
+    return res.status(400).json({
+        error: "Title is required"
+    });
+}
+
+    const newTask = {
+        id: tasks.length + 1,
+        title: req.body.title,
+        done: false
+    };
+
+    tasks.push(newTask);
+
+    res.status(201).json(newTask);
 
 });
 
