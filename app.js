@@ -1,5 +1,8 @@
 const express = require("express");
 
+const swaggerUi = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
+
 const app = express();
 
 app.use(express.json());
@@ -22,6 +25,25 @@ const tasks = [
     }
 ];
 
+const options = {
+    definition: {
+        openapi: "3.0.0",
+        info: {
+            title: "Task API",
+            version: "1.0.0",
+            description: "A simple CRUD API built with Express"
+        },
+        servers: [
+            {
+                url: "http://localhost:3000"
+            }
+        ]
+    },
+    apis: ["./app.js"]
+};
+
+const swaggerSpec = swaggerJsdoc(options);
+
 app.get("/", (req, res) => {
     res.json({
         name: "Task API",
@@ -36,9 +58,40 @@ app.get("/health", (req, res) => {
     });
 });
 
+/**
+ * @swagger
+ * /tasks:
+ *   get:
+ *     summary: Get all tasks
+ *     description: Returns a list of all tasks.
+ *     responses:
+ *       200:
+ *         description: A list of tasks.
+ */
+
 app.get("/tasks", (req, res) => {
     res.json(tasks);
 });
+
+/**
+ * @swagger
+ * /tasks/{id}:
+ *   get:
+ *     summary: Get a task by ID
+ *     description: Returns a single task by its ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Task ID
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Task found.
+ *       404:
+ *         description: Task not found.
+ */
 
 app.get("/tasks/:id", (req, res) => {
 
@@ -55,6 +108,29 @@ app.get("/tasks/:id", (req, res) => {
     res.json(task);
 
 });
+
+/**
+ * @swagger
+ * /tasks:
+ *   post:
+ *     summary: Create a new task
+ *     description: Creates a new task.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: Learn Express
+ *     responses:
+ *       201:
+ *         description: Task created successfully.
+ *       400:
+ *         description: Title is required.
+ */
 
 app.post("/tasks", (req, res) => {
 
@@ -75,6 +151,40 @@ app.post("/tasks", (req, res) => {
     res.status(201).json(newTask);
 
 });
+
+/**
+ * @swagger
+ * /tasks/{id}:
+ *   put:
+ *     summary: Update a task
+ *     description: Updates an existing task.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: Learn Node.js
+ *               done:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Task updated successfully.
+ *       400:
+ *         description: Invalid request.
+ *       404:
+ *         description: Task not found.
+ */
 
 app.put("/tasks/:id", (req, res) => {
 
@@ -101,6 +211,25 @@ res.json(task);
 
 });
 
+/**
+ * @swagger
+ * /tasks/{id}:
+ *   delete:
+ *     summary: Delete a task
+ *     description: Deletes a task by its ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Task deleted successfully.
+ *       404:
+ *         description: Task not found.
+ */
+
 app.delete("/tasks/:id", (req, res) => {
 
     const taskId = parseInt(req.params.id);
@@ -121,6 +250,8 @@ app.delete("/tasks/:id", (req, res) => {
     });
 
 });
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.listen(3000, () => {
     console.log("Server is running on http://localhost:3000");
