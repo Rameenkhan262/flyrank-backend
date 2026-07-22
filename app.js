@@ -305,7 +305,7 @@ res.json(task);
  *         schema:
  *           type: integer
  *     responses:
- *       200:
+ *       204:
  *         description: Task deleted successfully.
  *       404:
  *         description: Task not found.
@@ -323,12 +323,9 @@ app.delete("/tasks/:id", (req, res) => {
         });
     }
 
-    const deletedTask = tasks.splice(taskIndex, 1);
+    tasks.splice(taskIndex, 1);
 
-    res.json({
-        message: "Task deleted successfully",
-        task: deletedTask[0]
-    });
+    res.status(204).send();
 
 });
 
