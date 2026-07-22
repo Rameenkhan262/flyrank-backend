@@ -277,6 +277,22 @@ Requirements:
 
 ---
 
+## What AI got wrong
+
+The AI-generated version did not fully match the assignment requirements. It initially missed some validation rules, such as returning the correct `400 Bad Request` response for invalid input, and some response formats differed from my implementation. It also made different design choices that were not specified in my prompt, so I had to carefully review and compare the generated code before considering it correct.
+
+---
+
+## What my prompt forgot
+
+My original prompt did not specify every implementation detail. I forgot to clearly mention the exact response formats, required HTTP status codes for every endpoint, and that the API should use only an in-memory array with no database. Because those details were missing, the AI made its own assumptions instead of following the exact assignment requirements.
+
+---
+
+## One Rematch
+
+After reviewing the AI-generated code, I improved my prompt by explicitly specifying the required endpoints, validation rules, HTTP status codes, response formats, in-memory storage, and Swagger documentation. The regenerated version was much closer to my hand-built API and required fewer corrections.
+
 ## What I learned
 
 Building the project manually first helped me understand Express routing, middleware, request validation, and REST API design. This made it easier to evaluate AI-generated code, identify mistakes, and confidently debug issues when they occurred.
