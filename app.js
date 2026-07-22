@@ -63,14 +63,95 @@ app.get("/health", (req, res) => {
  * /tasks:
  *   get:
  *     summary: Get all tasks
- *     description: Returns a list of all tasks.
+ *     description: Returns a list of tasks. Optionally filter by completion status or search by title.
+ *     parameters:
+ *       - in: query
+ *         name: done
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Filter tasks by completion status.
+ *
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Search tasks by title.
+ *
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: Maximum number of tasks to return.
+ *
+ *       - in: query
+ *         name: offset
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: Number of tasks to skip before returning results.
+ *
  *     responses:
  *       200:
  *         description: A list of tasks.
  */
 
 app.get("/tasks", (req, res) => {
-    res.json(tasks);
+
+    const { done, search, limit, offset } = req.query;
+
+    let filteredTasks = [...tasks];
+
+    // Filter by completion status
+    if (done !== undefined) {
+        filteredTasks = filteredTasks.filter(
+            task => task.done === (done === "true")
+        );
+    }
+
+    // Search by title
+    if (search) {
+        filteredTasks = filteredTasks.filter(task =>
+            task.title.toLowerCase().includes(search.toLowerCase())
+        );
+    }
+
+    // Pagination
+    const start = offset ? parseInt(offset) : 0;
+    const end = limit ? start + parseInt(limit) : filteredTasks.length;
+
+    const paginatedTasks = filteredTasks.slice(start, end);
+
+    res.json(paginatedTasks);
+
+});
+/**
+ * @swagger
+ * /stats:
+ *   get:
+ *     summary: Get task statistics
+ *     description: Returns statistics about all tasks.
+ *     responses:
+ *       200:
+ *         description: Task statistics returned successfully.
+ */
+
+app.get("/stats", (req, res) => {
+
+    const total = tasks.length;
+
+    const completed = tasks.filter(task => task.done).length;
+
+    const pending = total - completed;
+
+    res.json({
+        total,
+        completed,
+        pending
+    });
+
 });
 
 /**
