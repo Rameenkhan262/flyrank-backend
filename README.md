@@ -210,16 +210,16 @@ http://localhost:3000/api-docs
 
 ### Home Page
 
-![Swagger Home](images/swagger_1.png.png)
+![Swagger Home](images/swagger_1.png)
 
 ### GET /tasks
 
-![GET Tasks](images/swagger_2.png.png)
+![GET Tasks](images/swagger_2.png)
 
 
 ### POST /tasks
 
-![POST Task](images/swagger_3.png.png)
+![POST Task](images/swagger_3.png)
 
 ### GET /stats
 
@@ -227,16 +227,16 @@ http://localhost:3000/api-docs
 
 ### GET /tasks/{id}
 
-![GET Task by ID](images/swagger_6.png.png)
+![GET Task by ID](images/swagger_6.png)
 
 
 ### PUT /tasks/{id}
 
-![PUT Task](images/swagger_7.png.png)
+![PUT Task](images/swagger_7.png)
 
 ### DELETE /tasks/{id}
 
-![DELETE Task](images/swagger_8.png.png)
+![DELETE Task](images/swagger_8.png)
 
 
 # AI vs Me
