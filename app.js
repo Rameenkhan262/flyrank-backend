@@ -230,17 +230,19 @@ if (task) {
  * /tasks:
  *   post:
  *     summary: Create a new task
- *     description: Creates a new task.
+ *     description: Creates a new task and stores it in the SQLite database.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - title
  *             properties:
  *               title:
  *                 type: string
- *                 example: Learn Express
+ *                 example: Learn SQLite
  *     responses:
  *       201:
  *         description: Task created successfully.
@@ -256,15 +258,17 @@ app.post("/tasks", (req, res) => {
     });
 }
 
-    const newTask = {
-        id: tasks.length + 1,
-        title: req.body.title,
-        done: false
-    };
+    const result = db.prepare(
+    "INSERT INTO tasks (title, done) VALUES (?, ?)"
+).run(req.body.title, 0);
 
-    tasks.push(newTask);
+const newTask = {
+    id: Number(result.lastInsertRowid),
+    title: req.body.title,
+    done: false
+};
 
-    res.status(201).json(newTask);
+res.status(201).json(newTask);
 
 });
 
