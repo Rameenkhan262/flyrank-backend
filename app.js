@@ -127,7 +127,11 @@ app.get("/tasks", (req, res) => {
 
     const { done, search, limit, offset } = req.query;
 
-    let filteredTasks = [...tasks];
+    let filteredTasks = db.prepare("SELECT * FROM tasks").all();
+    filteredTasks = filteredTasks.map(task => ({
+    ...task,
+    done: Boolean(task.done)
+}));
 
     // Filter by completion status
     if (done !== undefined) {
@@ -203,7 +207,13 @@ app.get("/tasks/:id", (req, res) => {
 
     const taskId = parseInt(req.params.id);
 
-    const task = tasks.find(t => t.id === taskId);
+    const task = db.prepare(
+    "SELECT * FROM tasks WHERE id = ?"
+).get(taskId);
+
+if (task) {
+    task.done = Boolean(task.done);
+}
 
     if (!task) {
         return res.status(404).json({
