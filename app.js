@@ -24,12 +24,16 @@ const row = db.prepare("SELECT COUNT(*) AS count FROM tasks").get();
 
 if (row.count === 0) {
     const insert = db.prepare(
-        "INSERT INTO tasks (title, done) VALUES (?, ?)"
-    );
+    "INSERT INTO tasks (title, done) VALUES (?, ?)"
+);
 
+const seedTasks = db.transaction(() => {
     insert.run("Learn Express", 0);
     insert.run("Build CRUD API", 0);
     insert.run("Test with Swagger", 1);
+});
+
+seedTasks();
 }
 
 const tasks = [
