@@ -381,6 +381,106 @@ Beyond the required assignment features, the following improvements were impleme
 - SQLite index on the `title` column to improve search performance
 - Automatic `created_at` and `updated_at` timestamps
 
+# AI vs Me
+
+## Prompt
+
+```
+Migrate an existing Express.js Task Management API from in-memory storage to SQLite using better-sqlite3.
+
+Requirements:
+
+- Use better-sqlite3 as the database library.
+- Create tasks.db automatically if it does not exist.
+- Create the tasks table automatically if it does not exist.
+- Seed exactly three sample tasks only when the table is empty.
+- Keep all existing endpoints unchanged:
+  - GET /tasks
+  - GET /tasks/:id
+  - POST /tasks
+  - PUT /tasks/:id
+  - DELETE /tasks/:id
+  - GET /stats
+- Preserve the same request and response formats.
+- Continue using the same HTTP status codes (200, 201, 204, 400, 404).
+- Use parameterized SQL queries for all database operations.
+- Store boolean values as integers (0/1) and convert them back to true/false in API responses.
+- Keep Swagger documentation working.
+- Do not change the API behaviour—only replace the storage layer.
+```
+
+---
+
+## What AI Did Well
+
+The AI successfully generated SQLite CRUD queries, used parameterized SQL statements, and created the database automatically. It also preserved the existing API endpoints and produced a working migration from in-memory storage to SQLite.
+
+---
+
+## What AI Got Wrong
+
+The first generated version did not fully match the assignment requirements. Some issues included:
+
+- Search and filtering were initially performed in JavaScript instead of SQL.
+- Statistics were calculated from the old in-memory array instead of querying the database.
+- The solution did not include SQL sorting using `ORDER BY`.
+- Transaction-based seeding was not implemented.
+- SQLite indexes and timestamps were not included.
+- The README documentation required additional improvements.
+
+These issues were corrected manually during development.
+
+---
+
+## What My Prompt Forgot
+
+Although the prompt described the database migration, it did not explicitly request:
+
+- SQL-based searching using `LIKE`
+- SQL filtering using `WHERE done = ?`
+- SQL sorting using `ORDER BY`
+- SQL-based statistics using `COUNT(*)`
+- Transaction-based seeding
+- SQLite indexes
+- `created_at` and `updated_at` timestamps
+
+Because these requirements were not specified, the AI generated a simpler implementation.
+
+---
+
+## One Rematch
+
+### Improved Prompt
+
+```
+Migrate the Express.js Task API from in-memory storage to SQLite using better-sqlite3.
+
+Requirements:
+
+- Keep all endpoints and HTTP status codes unchanged.
+- Use parameterized SQL queries only.
+- Perform searching using SQL LIKE.
+- Perform filtering using SQL WHERE clauses.
+- Perform sorting using ORDER BY.
+- Compute statistics using SQL COUNT(*).
+- Seed data inside a transaction.
+- Add an index on the title column.
+- Add created_at and updated_at timestamps.
+- Keep Swagger documentation unchanged.
+- Do not change the external API behaviour.
+```
+
+### What Changed
+
+After improving the prompt, the expected implementation became much closer to the final hand-built solution because it explicitly described the SQL behaviour instead of only requesting a database migration.
+
+---
+
+## What I Learned
+
+Building the SQLite migration manually before comparing it with AI helped me understand database design, SQL queries, transactions, indexing, and API migration. I also learned that AI produces much better code when requirements are specific and complete. Clear prompts result in better implementations, while vague prompts leave important design decisions to the AI.
+
+
 ## Author
 
 Developed as part of the **FlyRank Backend Internship**.
