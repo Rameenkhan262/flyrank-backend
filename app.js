@@ -127,26 +127,46 @@ app.get("/tasks", (req, res) => {
 
     const { done, search, limit, offset } = req.query;
 
-    let filteredTasks = db.prepare("SELECT * FROM tasks").all();
+    let filteredTasks;
+
+if (search && done !== undefined) {
+
+    filteredTasks = db.prepare(
+        "SELECT * FROM tasks WHERE title LIKE ? AND done = ?"
+    ).all(
+        `%${search}%`,
+        done === "true" ? 1 : 0
+    );
+
+}
+else if (search) {
+
+    filteredTasks = db.prepare(
+        "SELECT * FROM tasks WHERE title LIKE ?"
+    ).all(`%${search}%`);
+
+}
+else if (done !== undefined) {
+
+    filteredTasks = db.prepare(
+        "SELECT * FROM tasks WHERE done = ?"
+    ).all(done === "true" ? 1 : 0);
+
+}
+else {
+
+    filteredTasks = db.prepare(
+        "SELECT * FROM tasks"
+    ).all();
+
+}
     filteredTasks = filteredTasks.map(task => ({
     ...task,
     done: Boolean(task.done)
 }));
 
-    // Filter by completion status
-    if (done !== undefined) {
-        filteredTasks = filteredTasks.filter(
-            task => task.done === (done === "true")
-        );
-    }
-
-    // Search by title
-    if (search) {
-        filteredTasks = filteredTasks.filter(task =>
-            task.title.toLowerCase().includes(search.toLowerCase())
-        );
-    }
-
+    
+    
     // Pagination
     const start = offset ? parseInt(offset) : 0;
     const end = limit ? start + parseInt(limit) : filteredTasks.length;
