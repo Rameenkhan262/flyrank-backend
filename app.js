@@ -142,49 +142,35 @@ app.get("/health", (req, res) => {
 
 app.get("/tasks", (req, res) => {
 
-    const { done, search, limit, offset, sort } = req.query;
+    const { done, search, sort, limit, offset } = req.query;
 
-    let filteredTasks;
+let sql = "SELECT * FROM tasks";
+const conditions = [];
+const params = [];
 
-if (search && done !== undefined) {
-
-    filteredTasks = db.prepare(
-        sort === "title"
-    ? "SELECT * FROM tasks WHERE title LIKE ? AND done = ? ORDER BY title ASC"
-    : "SELECT * FROM tasks WHERE title LIKE ? AND done = ?"
-    ).all(
-        `%${search}%`,
-        done === "true" ? 1 : 0
-    );
-
+// Search
+if (search) {
+    conditions.push("title LIKE ?");
+    params.push(`%${search}%`);
 }
-else if (search) {
 
-    filteredTasks = db.prepare(
-        sort === "title"
-    ? "SELECT * FROM tasks WHERE title LIKE ? ORDER BY title ASC"
-    : "SELECT * FROM tasks WHERE title LIKE ?"
-    ).all(`%${search}%`);
-
+// Filter
+if (done !== undefined) {
+    conditions.push("done = ?");
+    params.push(done === "true" ? 1 : 0);
 }
-else if (done !== undefined) {
 
-    filteredTasks = db.prepare(
-        sort === "title"
-    ? "SELECT * FROM tasks WHERE done = ? ORDER BY title ASC"
-    : "SELECT * FROM tasks WHERE done = ?"
-    ).all(done === "true" ? 1 : 0);
-
+// Add WHERE clause
+if (conditions.length > 0) {
+    sql += " WHERE " + conditions.join(" AND ");
 }
-else {
 
-    filteredTasks = db.prepare(
-        sort === "title"
-    ? "SELECT * FROM tasks ORDER BY title ASC"
-    : "SELECT * FROM tasks"
-    ).all();
-
+// Sorting
+if (sort === "title") {
+    sql += " ORDER BY title ASC";
 }
+
+let filteredTasks = db.prepare(sql).all(...params);
     filteredTasks = filteredTasks.map(task => ({
     ...task,
     done: Boolean(task.done)
@@ -193,8 +179,8 @@ else {
     
     
     // Pagination
-    const start = offset ? parseInt(offset) : 0;
-    const end = limit ? start + parseInt(limit) : filteredTasks.length;
+    const start = Number(offset) || 0;
+    const end = limit ? start + Number(limit) : filteredTasks.length;
 
     const paginatedTasks = filteredTasks.slice(start, end);
 
