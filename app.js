@@ -16,7 +16,9 @@ db.prepare(`
 CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
-    done INTEGER NOT NULL DEFAULT 0
+    done INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 )
 `).run();
 
@@ -362,7 +364,11 @@ app.put("/tasks/:id", (req, res) => {
 }
 
    db.prepare(
-    "UPDATE tasks SET title = ?, done = ? WHERE id = ?"
+    `UPDATE tasks
+     SET title = ?,
+         done = ?,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE id = ?`
 ).run(
     req.body.title,
     req.body.done ? 1 : 0,
