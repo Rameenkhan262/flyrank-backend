@@ -364,7 +364,7 @@ This query retrieves all tasks currently stored in the SQLite database.
 
 The screenshot below shows the SQLite database opened in **DB Browser for SQLite**.
 
-![SQLite Database](images/db_tasks)
+![SQLite Database](images/db_tasks.png)
 
 
 ## Author
