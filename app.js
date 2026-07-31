@@ -16,31 +16,20 @@ db.prepare(`
 CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
-    done INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    done INTEGER NOT NULL DEFAULT 0
 )
-`).run();
-
-db.prepare(`
-CREATE INDEX IF NOT EXISTS idx_tasks_title
-ON tasks(title)
 `).run();
 
 const row = db.prepare("SELECT COUNT(*) AS count FROM tasks").get();
 
 if (row.count === 0) {
     const insert = db.prepare(
-    "INSERT INTO tasks (title, done) VALUES (?, ?)"
-);
+        "INSERT INTO tasks (title, done) VALUES (?, ?)"
+    );
 
-const seedTasks = db.transaction(() => {
     insert.run("Learn Express", 0);
     insert.run("Build CRUD API", 0);
     insert.run("Test with Swagger", 1);
-});
-
-seedTasks();
 }
 
 const tasks = [
@@ -99,7 +88,7 @@ app.get("/health", (req, res) => {
  * /tasks:
  *   get:
  *     summary: Get all tasks
- *     description: Returns a list of tasks. Supports filtering, searching, sorting, and pagination.
+ *     description: Returns a list of tasks. Optionally filter by completion status or search by title.
  *     parameters:
  *       - in: query
  *         name: done
@@ -129,14 +118,6 @@ app.get("/health", (req, res) => {
  *           type: integer
  *         description: Number of tasks to skip before returning results.
  *
- *       - in: query
- *         name: sort
- *         required: false
- *         schema:
- *           type: string
- *           enum: [title]
- *         description: Sort tasks alphabetically by title.
- *
  *     responses:
  *       200:
  *         description: A list of tasks.
@@ -144,45 +125,31 @@ app.get("/health", (req, res) => {
 
 app.get("/tasks", (req, res) => {
 
-    const { done, search, sort, limit, offset } = req.query;
+    const { done, search, limit, offset } = req.query;
 
-let sql = "SELECT * FROM tasks";
-const conditions = [];
-const params = [];
-
-// Search
-if (search) {
-    conditions.push("title LIKE ?");
-    params.push(`%${search}%`);
-}
-
-// Filter
-if (done !== undefined) {
-    conditions.push("done = ?");
-    params.push(done === "true" ? 1 : 0);
-}
-
-// Add WHERE clause
-if (conditions.length > 0) {
-    sql += " WHERE " + conditions.join(" AND ");
-}
-
-// Sorting
-if (sort === "title") {
-    sql += " ORDER BY title ASC";
-}
-
-let filteredTasks = db.prepare(sql).all(...params);
+    let filteredTasks = db.prepare("SELECT * FROM tasks").all();
     filteredTasks = filteredTasks.map(task => ({
     ...task,
     done: Boolean(task.done)
 }));
 
-    
-    
+    // Filter by completion status
+    if (done !== undefined) {
+        filteredTasks = filteredTasks.filter(
+            task => task.done === (done === "true")
+        );
+    }
+
+    // Search by title
+    if (search) {
+        filteredTasks = filteredTasks.filter(task =>
+            task.title.toLowerCase().includes(search.toLowerCase())
+        );
+    }
+
     // Pagination
-    const start = Number(offset) || 0;
-    const end = limit ? start + Number(limit) : filteredTasks.length;
+    const start = offset ? parseInt(offset) : 0;
+    const end = limit ? start + parseInt(limit) : filteredTasks.length;
 
     const paginatedTasks = filteredTasks.slice(start, end);
 
@@ -202,13 +169,9 @@ let filteredTasks = db.prepare(sql).all(...params);
 
 app.get("/stats", (req, res) => {
 
-    const total = db.prepare(
-        "SELECT COUNT(*) AS total FROM tasks"
-    ).get().total;
+    const total = tasks.length;
 
-    const completed = db.prepare(
-        "SELECT COUNT(*) AS completed FROM tasks WHERE done = 1"
-    ).get().completed;
+    const completed = tasks.filter(task => task.done).length;
 
     const pending = total - completed;
 
@@ -364,11 +327,7 @@ app.put("/tasks/:id", (req, res) => {
 }
 
    db.prepare(
-    `UPDATE tasks
-     SET title = ?,
-         done = ?,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE id = ?`
+    "UPDATE tasks SET title = ?, done = ? WHERE id = ?"
 ).run(
     req.body.title,
     req.body.done ? 1 : 0,
