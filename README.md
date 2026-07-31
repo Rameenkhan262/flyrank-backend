@@ -223,7 +223,7 @@ http://localhost:3000/api-docs
 
 ### GET /stats
 
-![Task Statistics](images/swagger_5.png.png)
+![Task Statistics](images/swagger_5.png)
 
 ### GET /tasks/{id}
 
