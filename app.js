@@ -88,7 +88,7 @@ app.get("/health", (req, res) => {
  * /tasks:
  *   get:
  *     summary: Get all tasks
- *     description: Returns a list of tasks. Optionally filter by completion status or search by title.
+ *     description: Returns a list of tasks. Supports filtering, searching, sorting, and pagination.
  *     parameters:
  *       - in: query
  *         name: done
@@ -118,6 +118,14 @@ app.get("/health", (req, res) => {
  *           type: integer
  *         description: Number of tasks to skip before returning results.
  *
+ *       - in: query
+ *         name: sort
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [title]
+ *         description: Sort tasks alphabetically by title.
+ *
  *     responses:
  *       200:
  *         description: A list of tasks.
@@ -125,14 +133,16 @@ app.get("/health", (req, res) => {
 
 app.get("/tasks", (req, res) => {
 
-    const { done, search, limit, offset } = req.query;
+    const { done, search, limit, offset, sort } = req.query;
 
     let filteredTasks;
 
 if (search && done !== undefined) {
 
     filteredTasks = db.prepare(
-        "SELECT * FROM tasks WHERE title LIKE ? AND done = ?"
+        sort === "title"
+    ? "SELECT * FROM tasks WHERE title LIKE ? AND done = ? ORDER BY title ASC"
+    : "SELECT * FROM tasks WHERE title LIKE ? AND done = ?"
     ).all(
         `%${search}%`,
         done === "true" ? 1 : 0
@@ -142,21 +152,27 @@ if (search && done !== undefined) {
 else if (search) {
 
     filteredTasks = db.prepare(
-        "SELECT * FROM tasks WHERE title LIKE ?"
+        sort === "title"
+    ? "SELECT * FROM tasks WHERE title LIKE ? ORDER BY title ASC"
+    : "SELECT * FROM tasks WHERE title LIKE ?"
     ).all(`%${search}%`);
 
 }
 else if (done !== undefined) {
 
     filteredTasks = db.prepare(
-        "SELECT * FROM tasks WHERE done = ?"
+        sort === "title"
+    ? "SELECT * FROM tasks WHERE done = ? ORDER BY title ASC"
+    : "SELECT * FROM tasks WHERE done = ?"
     ).all(done === "true" ? 1 : 0);
 
 }
 else {
 
     filteredTasks = db.prepare(
-        "SELECT * FROM tasks"
+        sort === "title"
+    ? "SELECT * FROM tasks ORDER BY title ASC"
+    : "SELECT * FROM tasks"
     ).all();
 
 }
