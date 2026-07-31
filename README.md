@@ -322,6 +322,50 @@ Backend-Week2/
 ```
 ---
 
+## Week 3 – SQLite Database Integration
+
+### Why SQLite?
+
+This project was upgraded from an in-memory task list to a SQLite database to provide persistent data storage. SQLite was chosen because it is lightweight, serverless, stores all data in a single file, and requires no additional database installation or configuration. Unlike the previous implementation, data now survives server restarts.
+
+### Database
+
+- Database file: `tasks.db`
+- Created automatically when the application starts.
+- The `tasks` table is created automatically if it does not already exist.
+- Three sample tasks are seeded only when the database is empty.
+- `tasks.db` is included in `.gitignore`, so every cloned project starts with a fresh database.
+
+### Running the Project
+
+Start the application with:
+
+```bash
+node app.js
+```
+
+The server will automatically:
+
+- Create `tasks.db` if it does not exist.
+- Create the `tasks` table if it is missing.
+- Insert the three sample tasks on the first run only.
+
+### Example SQL Query
+
+```sql
+SELECT * FROM tasks;
+```
+
+**Explanation:**
+
+This query retrieves all tasks currently stored in the SQLite database.
+
+### SQLite Database Screenshot
+
+The screenshot below shows the SQLite database opened in **DB Browser for SQLite**.
+
+![SQLite Database](images/db_tasks)
+
 
 ## Author
 
