@@ -368,6 +368,19 @@ The screenshot below shows the SQLite database opened in **DB Browser for SQLite
 *Figure 1: SQLite database viewed in DB Browser for SQLite showing the seeded tasks.*
 
 
+## Optional Enhancements
+
+Beyond the required assignment features, the following improvements were implemented:
+
+- SQL-based search using the `LIKE` operator
+- SQL-based filtering using `WHERE done = ?`
+- SQL-based alphabetical sorting using `ORDER BY title`
+- Dynamic SQL query construction for cleaner endpoint logic
+- SQL-based task statistics using `COUNT(*)`
+- Transaction-based database seeding
+- SQLite index on the `title` column to improve search performance
+- Automatic `created_at` and `updated_at` timestamps
+
 ## Author
 
 Developed as part of the **FlyRank Backend Internship**.
