@@ -303,7 +303,7 @@ Building the project manually first helped me understand Express routing, middle
 - Connect to MongoDB or MySQL
 - Add JWT Authentication
 - Add User Accounts
-- Store data permanently in a database
+- Migrate from SQLite to PostgreSQL for production deployment
 - Add automated testing
 - Deploy to Render or Railway
 
@@ -326,14 +326,14 @@ Backend-Week2/
 
 ### Why SQLite?
 
-This project was upgraded from an in-memory task list to a SQLite database to provide persistent data storage. SQLite was chosen because it is lightweight, serverless, stores all data in a single file, and requires no additional database installation or configuration. Unlike the previous implementation, data now survives server restarts.
+This project was upgraded from an in-memory task list to a SQLite database to provide persistent data storage. SQLite was chosen because it is lightweight, serverless, stores all data in a single file, and requires no additional database installation or configuration. Unlike the previous implementation, data now survives server restarts. This allows tasks created through the API to remain available even after the server is stopped and started again.
 
 ### Database
 
 - Database file: `tasks.db`
 - Created automatically when the application starts.
 - The `tasks` table is created automatically if it does not already exist.
-- Three sample tasks are seeded only when the database is empty.
+- Three sample tasks are seeded only on the first run when the database is empty.
 - `tasks.db` is included in `.gitignore`, so every cloned project starts with a fresh database.
 
 ### Running the Project
@@ -358,13 +358,14 @@ SELECT * FROM tasks;
 
 **Explanation:**
 
-This query retrieves all tasks currently stored in the SQLite database.
+This query retrieves every task stored in the tasks table and displays all records currently available in the SQLite database.
 
 ### SQLite Database Screenshot
 
 The screenshot below shows the SQLite database opened in **DB Browser for SQLite**.
 
 ![SQLite Database](images/db_tasks.png)
+*Figure 1: SQLite database viewed in DB Browser for SQLite showing the seeded tasks.*
 
 
 ## Author
