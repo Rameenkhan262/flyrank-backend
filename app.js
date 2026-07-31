@@ -20,6 +20,11 @@ CREATE TABLE IF NOT EXISTS tasks (
 )
 `).run();
 
+db.prepare(`
+CREATE INDEX IF NOT EXISTS idx_tasks_title
+ON tasks(title)
+`).run();
+
 const row = db.prepare("SELECT COUNT(*) AS count FROM tasks").get();
 
 if (row.count === 0) {
