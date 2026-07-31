@@ -205,9 +205,13 @@ else {
 
 app.get("/stats", (req, res) => {
 
-    const total = tasks.length;
+    const total = db.prepare(
+        "SELECT COUNT(*) AS total FROM tasks"
+    ).get().total;
 
-    const completed = tasks.filter(task => task.done).length;
+    const completed = db.prepare(
+        "SELECT COUNT(*) AS completed FROM tasks WHERE done = 1"
+    ).get().completed;
 
     const pending = total - completed;
 
