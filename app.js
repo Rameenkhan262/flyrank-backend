@@ -5,6 +5,8 @@ const swaggerJsdoc = require("swagger-jsdoc");
 
 const Database = require("better-sqlite3");
 
+const pool = require("./db");
+
 const app = express();
 
 
