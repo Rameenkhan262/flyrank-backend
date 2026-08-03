@@ -13,8 +13,9 @@ pool.connect()
         client.release();
     })
     .catch(err => {
-        console.error("❌ PostgreSQL connection failed:", err.message);
-    });
+    console.error("❌ PostgreSQL connection failed:");
+    console.error(err);
+});
 
     async function initializeDatabase() {
     await pool.query(`
@@ -57,7 +58,8 @@ if (count === 0) {
 }
 
 initializeDatabase().catch(err => {
-    console.error("Database initialization failed:", err.message);
+    console.error("Database initialization failed:");
+    console.error(err);
 });
 
 module.exports = pool;
