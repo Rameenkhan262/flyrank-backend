@@ -54,7 +54,7 @@ app.get("/health", (req, res) => {
  * /tasks:
  *   get:
  *     summary: Get all tasks
- *     description: Returns a list of tasks. Optionally filter by completion status or search by title.
+ *     description: Returns a list of tasks. Supports filtering, searching, sorting, and pagination.
  *     parameters:
  *       - in: query
  *         name: done
@@ -68,13 +68,23 @@ app.get("/health", (req, res) => {
  *         required: false
  *         schema:
  *           type: string
- *         description: Search tasks by title.
+ *         description: Search tasks by title (case-insensitive).
+ *
+ *       - in: query
+ *         name: sort
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum:
+ *             - title
+ *         description: Sort tasks alphabetically by title.
  *
  *       - in: query
  *         name: limit
  *         required: false
  *         schema:
  *           type: integer
+ *           minimum: 1
  *         description: Maximum number of tasks to return.
  *
  *       - in: query
@@ -82,43 +92,93 @@ app.get("/health", (req, res) => {
  *         required: false
  *         schema:
  *           type: integer
+ *           minimum: 0
  *         description: Number of tasks to skip before returning results.
  *
  *     responses:
  *       200:
- *         description: A list of tasks.
+ *         description: A list of tasks returned successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   title:
+ *                     type: string
+ *                     example: Learn PostgreSQL
+ *                   done:
+ *                     type: boolean
+ *                     example: false
  */
-
 app.get("/tasks", async (req, res) => {
+    try {
+        const { done, search, sort, limit, offset } = req.query;
 
-    const { done, search, limit, offset } = req.query;
+        if (limit && isNaN(parseInt(limit))) {
+            return res.status(400).json({
+                error: "limit must be a number"
+            });
+        }
 
-    const result = await pool.query("SELECT * FROM tasks");
+        if (offset && isNaN(parseInt(offset))) {
+            return res.status(400).json({
+                error: "offset must be a number"
+            });
+        }
 
-    let filteredTasks = result.rows;
+        let sql = "SELECT * FROM tasks";
+        const conditions = [];
+        const params = [];
 
-    // Filter by completion status
-    if (done !== undefined) {
-        filteredTasks = filteredTasks.filter(
-            task => task.done === (done === "true")
-        );
+        if (search) {
+            conditions.push(`title ILIKE $${params.length + 1}`);
+            params.push(`%${search}%`);
+        }
+
+        if (done !== undefined) {
+    if (done !== "true" && done !== "false") {
+        return res.status(400).json({
+            error: "done must be true or false"
+        });
     }
 
-    // Search by title
-    if (search) {
-        filteredTasks = filteredTasks.filter(task =>
-            task.title.toLowerCase().includes(search.toLowerCase())
-        );
+    conditions.push(`done = $${params.length + 1}`);
+    params.push(done === "true");
+}
+
+        if (conditions.length > 0) {
+            sql += " WHERE " + conditions.join(" AND ");
+        }
+
+        if (sort === "title") {
+            sql += " ORDER BY title ASC";
+        }
+
+        if (limit) {
+            sql += ` LIMIT $${params.length + 1}`;
+            params.push(parseInt(limit));
+        }
+
+        if (offset) {
+            sql += ` OFFSET $${params.length + 1}`;
+            params.push(parseInt(offset));
+        }
+
+        const result = await pool.query(sql, params);
+
+        res.json(result.rows);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            error: "Internal Server Error"
+        });
     }
-
-    // Pagination
-    const start = offset ? parseInt(offset) : 0;
-    const end = limit ? start + parseInt(limit) : filteredTasks.length;
-
-    const paginatedTasks = filteredTasks.slice(start, end);
-
-    res.json(paginatedTasks);
-
 });
 /**
  * @swagger
@@ -132,6 +192,7 @@ app.get("/tasks", async (req, res) => {
  */
 
 app.get("/stats", async (req, res) => {
+    try{
 
     const totalResult = await pool.query(
         "SELECT COUNT(*) FROM tasks"
@@ -152,6 +213,13 @@ app.get("/stats", async (req, res) => {
         completed,
         pending
     });
+}
+catch (err) {
+    console.error(err);
+    res.status(500).json({
+        error: "Internal Server Error"
+    });
+}
 
 });
 
@@ -176,24 +244,30 @@ app.get("/stats", async (req, res) => {
  */
 
 app.get("/tasks/:id", async (req, res) => {
+    try {
+        const taskId = parseInt(req.params.id);
 
-    const taskId = parseInt(req.params.id);
+        const result = await pool.query(
+            "SELECT * FROM tasks WHERE id = $1",
+            [taskId]
+        );
 
-    const result = await pool.query(
-        "SELECT * FROM tasks WHERE id = $1",
-        [taskId]
-    );
+        const task = result.rows[0];
 
-    const task = result.rows[0];
+        if (!task) {
+            return res.status(404).json({
+                error: `Task ${taskId} not found`
+            });
+        }
 
-    if (!task) {
-        return res.status(404).json({
-            error: `Task ${taskId} not found`
+        res.json(task);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            error: "Internal Server Error"
         });
     }
-
-    res.json(task);
-
 });
 
 /**
@@ -201,7 +275,7 @@ app.get("/tasks/:id", async (req, res) => {
  * /tasks:
  *   post:
  *     summary: Create a new task
- *     description: Creates a new task and stores it in the SQLite database.
+ *     description: Creates a new task and stores it in the PostgreSQL database.
  *     requestBody:
  *       required: true
  *       content:
@@ -213,7 +287,7 @@ app.get("/tasks/:id", async (req, res) => {
  *             properties:
  *               title:
  *                 type: string
- *                 example: Learn SQLite
+ *                 example: Learn PostgreSQL
  *     responses:
  *       201:
  *         description: Task created successfully.
@@ -222,22 +296,28 @@ app.get("/tasks/:id", async (req, res) => {
  */
 
 app.post("/tasks", async (req, res) => {
+    try {
+        if (!req.body.title || req.body.title.trim() === "") {
+            return res.status(400).json({
+                error: "Title is required"
+            });
+        }
 
-    if (!req.body.title || req.body.title.trim() === "") {
-    return res.status(400).json({
-        error: "Title is required"
-    });
-}
+        const result = await pool.query(
+            `INSERT INTO tasks (title, done)
+             VALUES ($1, $2)
+             RETURNING *`,
+            [req.body.title, false]
+        );
 
-    const result = await pool.query(
-    `INSERT INTO tasks (title, done)
-     VALUES ($1, $2)
-     RETURNING *`,
-    [req.body.title, false]
-);
+        res.status(201).json(result.rows[0]);
 
-res.status(201).json(result.rows[0]);
-
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            error: "Internal Server Error"
+        });
+    }
 });
 
 /**
@@ -275,35 +355,47 @@ res.status(201).json(result.rows[0]);
  */
 
 app.put("/tasks/:id", async (req, res) => {
+    try {
+        const taskId = parseInt(req.params.id);
 
-    const taskId = parseInt(req.params.id);
+        if (!req.body.title || req.body.title.trim() === "") {
+            return res.status(400).json({
+                error: "Title is required"
+            });
+        }
 
-    if (!req.body.title || req.body.title.trim() === "") {
-        return res.status(400).json({
-            error: "Title is required"
+        if (typeof req.body.done !== "boolean") {
+            return res.status(400).json({
+                error: "done must be a boolean"
+            });
+        }
+
+        const result = await pool.query(
+            `UPDATE tasks
+             SET title = $1, done = $2
+             WHERE id = $3
+             RETURNING *`,
+            [
+                req.body.title,
+                req.body.done,
+                taskId
+            ]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                error: `Task ${taskId} not found`
+            });
+        }
+
+        res.json(result.rows[0]);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            error: "Internal Server Error"
         });
     }
-
-    const result = await pool.query(
-        `UPDATE tasks
-         SET title = $1, done = $2
-         WHERE id = $3
-         RETURNING *`,
-        [
-            req.body.title,
-            req.body.done,
-            taskId
-        ]
-    );
-
-    if (result.rows.length === 0) {
-        return res.status(404).json({
-            error: `Task ${taskId} not found`
-        });
-    }
-
-    res.json(result.rows[0]);
-
 });
 
 /**
@@ -326,6 +418,7 @@ app.put("/tasks/:id", async (req, res) => {
  */
 
 app.delete("/tasks/:id", async (req, res) => {
+    try{
 
     const taskId = parseInt(req.params.id);
 
@@ -343,6 +436,13 @@ app.delete("/tasks/:id", async (req, res) => {
     }
 
     res.status(204).send();
+}
+catch (err) {
+    console.error(err);
+    res.status(500).json({
+        error: "Internal Server Error"
+    });
+}
 
 });
 
