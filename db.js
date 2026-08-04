@@ -57,9 +57,30 @@ if (count === 0) {
     console.log("✅ Tasks table is ready.");
 }
 
-initializeDatabase().catch(err => {
-    console.error("Database initialization failed:");
-    console.error(err);
-});
+async function startDatabase() {
+    let retries = 10;
+
+    while (retries > 0) {
+        try {
+            await initializeDatabase();
+            console.log("Database initialized successfully.");
+            return;
+        } catch (err) {
+            retries--;
+
+            console.log(
+                `Database not ready. Retrying in 3 seconds... (${retries} left)`
+            );
+
+            await new Promise(resolve =>
+                setTimeout(resolve, 3000)
+            );
+        }
+    }
+
+    console.error("Could not connect to PostgreSQL.");
+}
+
+startDatabase();
 
 module.exports = pool;
