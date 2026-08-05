@@ -1,19 +1,34 @@
+## Project Evolution
+
+This repository was developed incrementally across the FlyRank backend assignments.
+
+- Assignment 1 – REST API with in-memory storage
+- Assignment 2 – SQLite database migration
+- Assignment 3 – PostgreSQL migration and Docker Compose containerization
+
+
 # Task Management API
 
-A RESTful Task Management API built with **Node.js** and **Express**. The API stores tasks in memory (no database) and supports full CRUD operations, filtering, searching, pagination, task statistics, and interactive Swagger documentation.
+A RESTful Task Management API built with **Node.js**, **Express**, and **PostgreSQL**. The API supports full CRUD operations, filtering, searching, sorting, pagination, task statistics, interactive Swagger documentation, and Docker Compose deployment.
 
 ---
 
 ## Features
 
 - Full CRUD Task Management
+- PostgreSQL Database Integration
+- Docker & Docker Compose Support
+- Automatic Database Initialization and Seeding
 - Input Validation
 - Proper HTTP Status Codes
 - Interactive Swagger Documentation
 - Task Statistics (`/stats`)
 - Filtering (`?done=true`)
 - Searching (`?search=study`)
+- Sorting (`?sort=title`)
 - Pagination (`?limit=2&offset=0`)
+- Environment Variable Configuration (`dotenv`)
+- Parameterized SQL Queries (SQL Injection Protection)
 - Tested using Postman and Swagger UI
 
 ---
@@ -26,6 +41,10 @@ A RESTful Task Management API built with **Node.js** and **Express**. The API st
 - Swagger JSDoc
 - Git & GitHub
 - Postman
+- PostgreSQL
+- Docker
+- Docker Compose
+- dotenv
 
 ---
 
@@ -35,13 +54,46 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/Rameenkhan262/flyrank-backend.git
+cd flyrank-backend
 ```
+
+### Recommended: Run with Docker Compose 
+
+Build and start the application:
+
+```bash
+docker compose up --build
+```
+
+Stop the containers:
+
+```bash
+docker compose down
+```
+
+The API will be available at:
+
+```
+http://localhost:3000
+```
+
+Swagger Documentation:
+
+```
+http://localhost:3000/api-docs
+```
+
+---
+
+### Local Development
 
 Install dependencies:
 
 ```bash
 npm install
 ```
+
+Create a `.env` file using `.env.example`.
 
 Run the server:
 
@@ -61,7 +113,17 @@ Swagger Documentation:
 http://localhost:3000/api-docs
 ```
 
----
+## Environment Variables
+
+Create a `.env` file:
+
+```env
+DATABASE_URL=postgres://postgres:dev@localhost:5432/tasks
+PORT=3000
+```
+
+A sample configuration is also provided in `.env.example`.
+
 
 # API Endpoints
 
@@ -107,6 +169,16 @@ GET /tasks?search=study
 ```
 
 Searches tasks by title.
+
+---
+
+### Sorting
+
+```
+GET /tasks?sort=title
+```
+
+Sorts tasks alphabetically by title.
 
 ---
 
@@ -300,12 +372,11 @@ Building the project manually first helped me understand Express routing, middle
 
 ## Future Improvements
 
-- Connect to MongoDB or MySQL
 - Add JWT Authentication
 - Add User Accounts
-- Migrate from SQLite to PostgreSQL for production deployment
-- Add automated testing
+- Add automated API testing
 - Deploy to Render or Railway
+- Add CI/CD pipeline
 
 ---
 
@@ -314,15 +385,19 @@ Building the project manually first helped me understand Express routing, middle
 ```text
 Backend-Week2/
 │── app.js
+│── db.js
+│── Dockerfile
+│── compose.yaml
+│── .dockerignore
+│── .env.example
 │── package.json
 │── package-lock.json
 │── README.md
-│── .gitignore
 └── images/
 ```
 ---
 
-## Week 3 – SQLite Database Integration
+## Week 3 A2 – SQLite Database Integration
 
 ### Why SQLite?
 
@@ -336,19 +411,49 @@ This project was upgraded from an in-memory task list to a SQLite database to pr
 - Three sample tasks are seeded only on the first run when the database is empty.
 - `tasks.db` is included in `.gitignore`, so every cloned project starts with a fresh database.
 
-### Running the Project
 
-Start the application with:
+# Week 3 A3 – PostgreSQL & Docker Integration
+
+## Why PostgreSQL?
+
+The project was migrated from SQLite to PostgreSQL to use a production-ready relational database.
+
+The API now connects to PostgreSQL using the `pg` library and automatically creates the `tasks` table if it does not already exist.
+
+Sample tasks are inserted only when the database is empty.
+
+## Docker
+
+Docker Compose is used to run:
+
+- PostgreSQL
+- Express API
+
+Start everything with:
 
 ```bash
-node app.js
+docker compose up --build
 ```
 
-The server will automatically:
+Stop:
 
-- Create `tasks.db` if it does not exist.
-- Create the `tasks` table if it is missing.
-- Insert the three sample tasks on the first run only.
+```bash
+docker compose down
+```
+
+The API automatically waits until PostgreSQL is available before initializing the database.
+
+
+### Database Initialization
+
+The application automatically initializes the PostgreSQL database when it starts.
+
+This includes:
+
+- Connecting to the PostgreSQL database.
+- Creating the `tasks` table if it does not already exist.
+- Seeding three sample tasks only when the table is empty.
+- Waiting for PostgreSQL to become available when running with Docker Compose before initializing the database.
 
 ### Example SQL Query
 
@@ -358,28 +463,33 @@ SELECT * FROM tasks;
 
 **Explanation:**
 
-This query retrieves every task stored in the tasks table and displays all records currently available in the SQLite database.
+This query retrieves every task stored in the `tasks` table and displays all records currently available in the PostgreSQL database.
 
-### SQLite Database Screenshot
+### PostgreSQL Database
 
-The screenshot below shows the SQLite database opened in **DB Browser for SQLite**.
+The project uses PostgreSQL for persistent data storage. The database is initialized automatically when the application starts, and Docker Compose can be used to run both the Express API and PostgreSQL with a single command.
 
-![SQLite Database](images/db_tasks.png)
-*Figure 1: SQLite database viewed in DB Browser for SQLite showing the seeded tasks.*
+### PostgreSQL Database Screenshot
+
+The screenshot below shows the PostgreSQL database containing the `tasks` table and the seeded sample tasks.
+
+![PostgreSQL Database](images/postgresql_db.png)
 
 
 ## Optional Enhancements
 
 Beyond the required assignment features, the following improvements were implemented:
 
-- SQL-based search using the `LIKE` operator
-- SQL-based filtering using `WHERE done = ?`
-- SQL-based alphabetical sorting using `ORDER BY title`
-- Dynamic SQL query construction for cleaner endpoint logic
+- PostgreSQL database integration
+- Docker Compose deployment
+- Automatic database initialization
+- Automatic sample data seeding
+- SQL-based searching using `ILIKE`
+- SQL-based filtering using `WHERE`
+- SQL-based sorting using `ORDER BY`
+- SQL-based pagination using `LIMIT` and `OFFSET`
 - SQL-based task statistics using `COUNT(*)`
-- Transaction-based database seeding
-- SQLite index on the `title` column to improve search performance
-- Automatic `created_at` and `updated_at` timestamps
+- Parameterized SQL queries for SQL injection protection
 
 # AI vs Me
 
